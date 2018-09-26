@@ -1,0 +1,27 @@
+.list-item{
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  margin: 0 10px;
+  border-bottom: 1px solid #ccc;
+  font-size: 14px;
+}
+.list-img{
+  flex: 1;
+  height: 50px;
+  padding-right: 10px;
+}
+.list-main{
+  flex: 2
+}
+.list-title{
+  font-size: 16px;
+  font-weight: bold;
+}
+
+
+.custom-loading{
+  /* margin: 0 auto; */
+  /* padding: 30rpx 0; */
+  text-align: center;
+}
