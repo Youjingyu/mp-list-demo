@@ -13,7 +13,7 @@ Page({
   },
   loadMore () {
     this.setData({
-      list: this.data.list.concat(mockData)
+      list: this.data.list.concat(mockData())
     })
   }
 })
