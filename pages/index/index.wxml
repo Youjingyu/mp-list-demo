@@ -4,7 +4,7 @@
       <view wx:if="item.data" class="list-item">
         <image src="{{item.data.src}}" class="list-img"></image>
         <view class="list-main">
-          <view class="list-main-title">{{item.data.title}}</view>
+          <view class="list-main-title">{{index}}: {{item.data.title}}</view>
           <view class="list-main-detail">{{item.data.detail}}</view>
         </view>
       </view>
