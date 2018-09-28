@@ -1,6 +1,6 @@
 export default function () {
   const arr = []
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 10; i++) {
     arr.push({
       title: '钟欣潼来台湾出演电视剧...',
       src: '../../img/list-img.jpg',

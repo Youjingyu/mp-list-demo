@@ -1,3 +1,9 @@
+page {
+  height: 100%;
+}
+.container{
+  height: 100%;
+}
 .list-item{
   display: flex;
   align-items: center;
