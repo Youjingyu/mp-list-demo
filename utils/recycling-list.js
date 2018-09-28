@@ -1,9 +1,10 @@
+/* global wx */
+
 const noop = () => {}
 const defaultOptions = {
   wx: null,
   height: 667,
   name: 'recycling-list',
-  // countPerPage: 10,
   onUpdate: noop
 }
 
@@ -14,68 +15,87 @@ class RecyclingList {
     } catch (err) {
       console.error('recycling-list get windowHeight error: ' + err.message)
     }
+    defaultOptions.wx = wx
     this.options = Object.assign(defaultOptions, options)
-    this.query = this.options.wx.createSelectorQuery()
-    // this.page = 0
     this.list = []
-    // this.renderList = []
-    this.scrollTop = 0
-    // this.startRenderIndex = 0
-    // this.endRenderIndex = undefined
+    this.renderList = []
+    this.scrollTop = this.options.height
+    this.throttleTimer = null
+    this.appendFlag = false
+    this.firstItemQueryFields = null
   }
   append (list) {
-    this.list = this.list.concat(list.map((item) => {
+    const len = this.list.length
+    const formatList = list.map((item, i) => {
       return {
         data: item,
-        height: undefined
+        id: this.options.name + '-' + (i + len)
+        // height: undefined
       }
-    }))
-    this.update()
+    })
+    this.list = this.list.concat(formatList)
+    this.renderList = this.renderList.concat(formatList)
+    this.appendFlag = true
+    this.options.onUpdate(this.renderList)
   }
-  scroll (e) {
-    const { scrollTop } = e.detail
-    // const currentPage = Math.ceil(scrollTop / this.options.height)
-    // console.log(currentPage)
-    // 页码变化
-    console.log('滑动距离：' + (scrollTop - this.scrollTop))
+  scroll () {
+    if (!this.firstItemQueryFields) {
+      const firstItemId = `#${this.options.name}-0`
+      this.firstItemQueryFields = wx.createSelectorQuery().select(firstItemId).fields({
+        rect: true
+      }, res => {
+        console.log('top: ' + Math.abs(res.top))
+        this._controlScroll(Math.abs(res.top))
+      })
+    }
+    this.firstItemQueryFields.exec()
+  }
+  _controlScroll (scrollTop) {
+    if (this.appendFlag) {
+      this.scrollTop = scrollTop
+      this.appendFlag = false
+      return
+    }
+    // 滚动超过一屏
     if (Math.abs(scrollTop - this.scrollTop) > this.options.height) {
-      // this.page = currentPage
-      setTimeout(() => {
+      clearTimeout(this.throttleTimer)
+      this.throttleTimer = setTimeout(() => {
         this.scrollTop = scrollTop
-        this.update(scrollTop)
-      }, 300)
+        this.update()
+      }, 100)
     }
   }
   update () {
-    // 渲染前后5页
-    // this.startRenderIndex = (this.page - 2) * this.options.countPerPage
-    // this.endRenderIndex = (this.page + 2) * this.options.countPerPage
-    // console.log('currentPage: ' + this.page)
-    let listHeight = 0
+    let itemPosition = 0
+    // 渲染当前页与前后2页
     const renderRange = this.options.height * 2
     const tasks = []
-    this.list.forEach((item, i) => {
-      const distance = Math.abs(this.scrollTop - listHeight)
-      console.log('distance: ' + distance)
-      const data = distance < renderRange ? item.data : 0
-      const id = this.options.name + '-' + i
 
+    this.list.forEach((item, i) => {
       const task = new Promise((resolve) => {
         if (item.height !== undefined && item.height !== null) {
-          listHeight += item.height
+          itemPosition += item.height
+          const distance = Math.abs(this.scrollTop - itemPosition)
+          const data = distance < renderRange ? item.data : 0
           resolve({
             data,
-            id,
+            // id,
             height: item.height + 'px'
           })
         } else {
-          console.log('data: ' + data)
+          const id = this.options.name + '-' + i
           this.options.wx.createSelectorQuery().select('#' + id).fields({ size: true }, (res) => {
-            item.height = res && res.height
+            let height = res && res.height
+            if (height) {
+              itemPosition += height
+              item.height = height
+            }
+            // const distance = Math.abs(this.scrollTop - itemPosition)
+            // const data = distance < renderRange ? item.data : 0
             resolve({
-              data,
-              id,
-              height: item.height ? item.height + 'px' : undefined
+              data: item.data,
+              // id,
+              height: height ? height + 'px' : undefined
             })
           }).exec()
         }
@@ -83,6 +103,8 @@ class RecyclingList {
       tasks.push(task)
     })
     Promise.all(tasks).then((renderList) => {
+      this.renderList = renderList
+      renderList[0].id = this.options.name + '-' + 0
       this.options.onUpdate(renderList)
     })
   }

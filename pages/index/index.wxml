@@ -1,4 +1,4 @@
-<scroll-view bindscroll="scroll" bindscrolltolower="scrolltolower" scroll-y class="container">
+<scroll-view bindscroll="scroll" bindscrolltolower="scrolltolower" scroll-y id="container" class="container">
   <view>
     <view wx:for="{{list}}" wx:key="index" id="{{item.id}}">
       <view wx:if="item.data" class="list-item">
