@@ -13,7 +13,7 @@ class RecyclingList {
     this.options = Object.assign(defaultOptions, options)
     // 获取容器高度
     this.options.wx.createSelectorQuery().select('#' + this.options.id).fields({ size: true }, (res) => {
-      this.options.height = res.height
+      this.containerHeight = res.height
       // scroll-top包含第一屏的高度
       // 从而简化item位置与scrollTop的对比
       this.scrollTop = res.height
@@ -37,9 +37,9 @@ class RecyclingList {
     }, 100)
   }
   scroll (e) {
-    const scrollTop = e.detail.scrollTop + this.options.height
+    const scrollTop = e.detail.scrollTop + this.containerHeight
     // 滚动超过两屏
-    if (Math.abs(scrollTop - this.scrollTop) > this.options.height * 2) {
+    if (Math.abs(scrollTop - this.scrollTop) > this.containerHeight * 2) {
       this.scrollTop = scrollTop
       clearTimeout(this.throttleTimer)
       this.throttleTimer = setTimeout(() => {
@@ -51,7 +51,7 @@ class RecyclingList {
   update () {
     let itemPosition = 0
     // 渲染当前页与前后4页
-    const renderRange = this.options.height * 4
+    const renderRange = this.containerHeight * 4
     const tasks = []
 
     this.list.forEach((item, i) => {
