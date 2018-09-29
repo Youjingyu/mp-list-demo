@@ -1,4 +1,6 @@
-<scroll-view bindscroll="scroll" bindscrolltolower="scrolltolower" scroll-y id="container" class="container">
+<view style="display: flex;flex-direction: column;height: 100%;owerflow:hidden">
+  <!-- <view style="flex:1">222</view> -->
+  <scroll-view bindscroll="scroll" bindscrolltolower="scrolltolower" scroll-y id="recycling-list" class="container" style="flex:5">
   <view>
     <view wx:for="{{list}}" wx:key="index" id="{{item.id}}"
       style="height: {{item.height}};">
@@ -9,11 +11,12 @@
           <view class="list-main-detail">{{item.data.detail}}</view>
         </view>
       </view>
-      <!-- <view wx:else style="height: {{item.height}};" class="list-item"></view> -->
+      <!-- <view wx:else style="height: {{item.height}};" class="list-item">占位...</view> -->
     </view>
     <view class="weui-loadmore custom-loading">
       <view class="weui-loading"></view>
       <view class="weui-loadmore__tips">正在加载</view>
     </view>
   </view>
-</scroll-view>
+  </scroll-view>
+</view>

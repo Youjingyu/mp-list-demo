@@ -3,27 +3,23 @@
 const noop = () => {}
 const defaultOptions = {
   wx: null,
-  height: 667,
-  name: 'recycling-list',
+  id: 'recycling-list',
   onUpdate: noop
 }
 
 class RecyclingList {
   constructor (options) {
     options.wx = options.wx || wx
-    if (!options.height) {
-      try {
-        defaultOptions.height = options.wx.getSystemInfoSync().windowHeight
-      } catch (err) {
-        console.error('recycling-list get windowHeight error: ' + err.message)
-      }
-    }
     this.options = Object.assign(defaultOptions, options)
+    // 获取容器高度
+    this.options.wx.createSelectorQuery().select('#' + this.options.id).fields({ size: true }, (res) => {
+      this.options.height = res.height
+      // scroll-top包含第一屏的高度
+      // 从而简化item位置与scrollTop的对比
+      this.scrollTop = res.height
+    }).exec()
     this.list = []
     this.renderList = []
-    // scroll-top包含第一屏高度
-    // 简化item位置与scrollTop的对比
-    this.scrollTop = this.options.height
     this.throttleTimer = null
   }
   append (list) {
@@ -31,7 +27,7 @@ class RecyclingList {
     const formatList = list.map((item, i) => {
       return {
         data: item,
-        id: this.options.name + '-' + (i + len)
+        id: this.options.id + '-' + (i + len)
       }
     })
     this.list = this.list.concat(formatList)
@@ -47,10 +43,9 @@ class RecyclingList {
       this.scrollTop = scrollTop
       clearTimeout(this.throttleTimer)
       this.throttleTimer = setTimeout(() => {
-        console.log('distance: ' + (scrollTop - this.scrollTop))
         this.scrollTop = scrollTop
         this.update()
-      }, 100)
+      }, 200)
     }
   }
   update () {
@@ -71,7 +66,7 @@ class RecyclingList {
             height: item.height + 'px'
           })
         } else {
-          let id = this.options.name + '-' + i
+          let id = this.options.id + '-' + i
           this.options.wx.createSelectorQuery().select('#' + id).fields({ size: true }, (res) => {
             let height = res && res.height
             // 尽可能减少itemData的字段，从而减小setData传输数据的大小
@@ -86,7 +81,7 @@ class RecyclingList {
               const distance = Math.abs(this.scrollTop - itemPosition)
               itemData = {
                 data: distance < renderRange ? item.data : 0,
-                height: height
+                height: height + 'px'
               }
             }
             resolve(itemData)
