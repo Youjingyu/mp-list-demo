@@ -55,7 +55,7 @@ class RecyclingList {
   }
   update () {
     let itemPosition = 0
-    // 渲染当前页与前后6页
+    // 渲染当前页与前后4页
     const renderRange = this.options.height * 4
     const tasks = []
 
