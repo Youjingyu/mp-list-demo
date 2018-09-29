@@ -10,18 +10,21 @@ const defaultOptions = {
 
 class RecyclingList {
   constructor (options) {
-    try {
-      defaultOptions.height = options.wx.getSystemInfoSync().windowHeight
-    } catch (err) {
-      console.error('recycling-list get windowHeight error: ' + err.message)
+    options.wx = options.wx || wx
+    if (!options.height) {
+      try {
+        defaultOptions.height = options.wx.getSystemInfoSync().windowHeight
+      } catch (err) {
+        console.error('recycling-list get windowHeight error: ' + err.message)
+      }
     }
-    defaultOptions.wx = wx
     this.options = Object.assign(defaultOptions, options)
     this.list = []
     this.renderList = []
+    // scroll-top包含第一屏高度
+    // 简化item位置与scrollTop的对比
     this.scrollTop = this.options.height
     this.throttleTimer = null
-    this.appendFlag = false
   }
   append (list) {
     const len = this.list.length
@@ -29,20 +32,19 @@ class RecyclingList {
       return {
         data: item,
         id: this.options.name + '-' + (i + len)
-        // height: undefined
       }
     })
     this.list = this.list.concat(formatList)
     this.renderList = this.renderList.concat(formatList)
-    this.appendFlag = true
     this.throttleTimer = setTimeout(() => {
       this.options.onUpdate(this.renderList)
     }, 100)
   }
   scroll (e) {
     const scrollTop = e.detail.scrollTop + this.options.height
-    // 滚动超过一屏
-    if (Math.abs(scrollTop - this.scrollTop) > this.options.height) {
+    // 滚动超过两屏
+    if (Math.abs(scrollTop - this.scrollTop) > this.options.height * 2) {
+      this.scrollTop = scrollTop
       clearTimeout(this.throttleTimer)
       this.throttleTimer = setTimeout(() => {
         console.log('distance: ' + (scrollTop - this.scrollTop))
@@ -53,7 +55,7 @@ class RecyclingList {
   }
   update () {
     let itemPosition = 0
-    // 渲染当前页与前后2页
+    // 渲染当前页与前后6页
     const renderRange = this.options.height * 4
     const tasks = []
 
@@ -61,28 +63,33 @@ class RecyclingList {
       const task = new Promise((resolve) => {
         if (item.height !== undefined && item.height !== null) {
           itemPosition += item.height
+          // 判断该item是否超出显示范围
           const distance = Math.abs(this.scrollTop - itemPosition)
           const data = distance < renderRange ? item.data : 0
           resolve({
             data,
-            // id,
             height: item.height + 'px'
           })
         } else {
-          const id = this.options.name + '-' + i
+          let id = this.options.name + '-' + i
           this.options.wx.createSelectorQuery().select('#' + id).fields({ size: true }, (res) => {
             let height = res && res.height
+            // 尽可能减少itemData的字段，从而减小setData传输数据的大小
+            let itemData = {
+              data: item.data,
+              id: id // 只有height未知的item才需要id
+            }
             if (height) {
               itemPosition += height
+              // 保存height
               item.height = height
+              const distance = Math.abs(this.scrollTop - itemPosition)
+              itemData = {
+                data: distance < renderRange ? item.data : 0,
+                height: height
+              }
             }
-            // const distance = Math.abs(this.scrollTop - itemPosition)
-            // const data = distance < renderRange ? item.data : 0
-            resolve({
-              data: item.data,
-              id,
-              height: height ? height + 'px' : undefined
-            })
+            resolve(itemData)
           }).exec()
         }
       })
@@ -90,7 +97,6 @@ class RecyclingList {
     })
     Promise.all(tasks).then((renderList) => {
       this.renderList = renderList
-      renderList[0].id = this.options.name + '-' + 0
       this.options.onUpdate(renderList)
     })
   }
