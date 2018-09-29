@@ -1,5 +1,9 @@
 /* global wx */
-
+/**
+ * @author whale
+ * @fileOverview 小程序长列表优化
+ * @date 2018-09-28
+ */
 const noop = () => {}
 const defaultOptions = {
   wx: null,
@@ -7,7 +11,14 @@ const defaultOptions = {
   onUpdate: noop
 }
 
+/** Class 长列表优化 */
 class RecyclingList {
+  /**
+   * @param {object} options - 配置
+   * @param {object} options.wx - 小程序中的wx对象
+   * @param {string} options.id - 列表容器元素
+   * @param {function} options.onUpdate - 列表数据更新的回调
+   */
   constructor (options) {
     options.wx = options.wx || wx
     this.options = Object.assign(defaultOptions, options)
@@ -22,6 +33,10 @@ class RecyclingList {
     this.renderList = []
     this.throttleTimer = null
   }
+  /**
+   * 向RecyclingList添加数据
+   * @param {array} list - 列表数据
+   */
   append (list) {
     const len = this.list.length
     const formatList = list.map((item, i) => {
@@ -36,6 +51,10 @@ class RecyclingList {
       this.options.onUpdate(this.renderList)
     }, 100)
   }
+  /**
+   * 列表滚动时需要调动的函数
+   * @param {object} e - 小程序事件对象
+   */
   scroll (e) {
     const scrollTop = e.detail.scrollTop + this.containerHeight
     // 滚动超过两屏
@@ -44,11 +63,11 @@ class RecyclingList {
       clearTimeout(this.throttleTimer)
       this.throttleTimer = setTimeout(() => {
         this.scrollTop = scrollTop
-        this.update()
+        this._update()
       }, 200)
     }
   }
-  update () {
+  _update () {
     let itemPosition = 0
     // 渲染当前页与前后4页
     const renderRange = this.containerHeight * 4
