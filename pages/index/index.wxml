@@ -1,14 +1,15 @@
 <scroll-view bindscroll="scroll" bindscrolltolower="scrolltolower" scroll-y id="container" class="container">
   <view>
-    <view wx:for="{{list}}" wx:key="index" id="{{item.id}}">
-      <view wx:if="item.data" class="list-item">
+    <view wx:for="{{list}}" wx:key="index" id="{{item.id}}"
+      style="height: {{item.height}};">
+      <view wx:if="item.data !== 0" class="list-item">
         <image src="{{item.data.src}}" class="list-img"></image>
         <view class="list-main">
           <view class="list-main-title">{{index}}: {{item.data.title}}</view>
           <view class="list-main-detail">{{item.data.detail}}</view>
         </view>
       </view>
-      <view wx:else style="height: {{item.height}};" class="list-item"></view>
+      <!-- <view wx:else style="height: {{item.height}};" class="list-item"></view> -->
     </view>
     <view class="weui-loadmore custom-loading">
       <view class="weui-loading"></view>

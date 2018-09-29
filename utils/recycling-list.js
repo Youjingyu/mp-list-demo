@@ -22,7 +22,6 @@ class RecyclingList {
     this.scrollTop = this.options.height
     this.throttleTimer = null
     this.appendFlag = false
-    this.firstItemQueryFields = null
   }
   append (list) {
     const len = this.list.length
@@ -36,30 +35,17 @@ class RecyclingList {
     this.list = this.list.concat(formatList)
     this.renderList = this.renderList.concat(formatList)
     this.appendFlag = true
-    this.options.onUpdate(this.renderList)
+    this.throttleTimer = setTimeout(() => {
+      this.options.onUpdate(this.renderList)
+    }, 100)
   }
-  scroll () {
-    if (!this.firstItemQueryFields) {
-      const firstItemId = `#${this.options.name}-0`
-      this.firstItemQueryFields = wx.createSelectorQuery().select(firstItemId).fields({
-        rect: true
-      }, res => {
-        console.log('top: ' + Math.abs(res.top))
-        this._controlScroll(Math.abs(res.top))
-      })
-    }
-    this.firstItemQueryFields.exec()
-  }
-  _controlScroll (scrollTop) {
-    if (this.appendFlag) {
-      this.scrollTop = scrollTop
-      this.appendFlag = false
-      return
-    }
+  scroll (e) {
+    const scrollTop = e.detail.scrollTop + this.options.height
     // 滚动超过一屏
     if (Math.abs(scrollTop - this.scrollTop) > this.options.height) {
       clearTimeout(this.throttleTimer)
       this.throttleTimer = setTimeout(() => {
+        console.log('distance: ' + (scrollTop - this.scrollTop))
         this.scrollTop = scrollTop
         this.update()
       }, 100)
@@ -68,7 +54,7 @@ class RecyclingList {
   update () {
     let itemPosition = 0
     // 渲染当前页与前后2页
-    const renderRange = this.options.height * 2
+    const renderRange = this.options.height * 4
     const tasks = []
 
     this.list.forEach((item, i) => {
@@ -94,7 +80,7 @@ class RecyclingList {
             // const data = distance < renderRange ? item.data : 0
             resolve({
               data: item.data,
-              // id,
+              id,
               height: height ? height + 'px' : undefined
             })
           }).exec()
